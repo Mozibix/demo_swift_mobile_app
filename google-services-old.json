@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "868182749103",
+    "project_id": "swiftpay-mfb",
+    "storage_bucket": "swiftpay-mfb.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:868182749103:android:633041602337480c71495a",
+        "android_client_info": {
+          "package_name": "com.swiftpay.swiftpaymfb"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCRW3Ggt8NV7yn2GaoMwWL8K17n1HrLSpE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

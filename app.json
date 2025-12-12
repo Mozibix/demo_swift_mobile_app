@@ -1,0 +1,108 @@
+{
+  "expo": {
+    "name": "SwiftPay",
+    "slug": "swiftpaymfb",
+    "version": "1.1.3",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "swiftpay",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/images/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#1400FB"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.swiftpay.swiftpaymfb",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      },
+      "googleServicesFile": "./GoogleService-Info.plist"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/adaptive-icon-currennt.png",
+        "backgroundColor": "#FFFFFF"
+      },
+      "package": "com.kingheart.swiftpay",
+      "googleServicesFile": "./google-services.json",
+      "permissions": [
+        "android.permission.INTERNET",
+        "android.permission.ACCESS_NETWORK_STATE",
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
+      ]
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      "@react-native-firebase/app",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow SwiftPay to access your photos to upload KYC documents, transaction screenshots, profile pictures."
+        }
+      ],
+      [
+        "expo-contacts",
+        {
+          "contactsPermission": "Allow SwiftPay to access your contacts so you can easily select phone numbers when transferring airtime."
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true,
+            "allowBackup": false,
+            "useLegacyPackaging": true,
+            "compileSdkVersion": 35,
+            "targetSdkVersion": 35,
+            "minSdkVersion": 29,
+            "buildToolsVersion": "34.0.0",
+            "kotlinVersion": "1.9.25"
+          },
+          "ios": {
+            "useFrameworks": "static"
+          }
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow SwiftPay to access your camera to scan QR codes for quick transfers and to capture documents for KYC verification.",
+          "recordAudioAndroid": true
+        }
+      ],
+      [
+        "expo-updates",
+        {
+          "username": "juliusgreat"
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "c45a0983-7170-4662-82e4-8b584711a36e"
+      }
+    },
+    "runtimeVersion": "1.0.0",
+    "updates": {
+      "url": "https://u.expo.dev/c45a0983-7170-4662-82e4-8b584711a36e"
+    },
+    "owner": "juliusgreat"
+  }
+}
