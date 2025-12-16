@@ -49,7 +49,7 @@ const TransferToSwiftpay: React.FC = () => {
 
 	const [swiftPayTag, setSwiftPayTag] = useState(params?.tag || "");
 	const [recipientName, setRecipientName] = useState("");
-	const [amount, setAmount] = useState(params?.amount || "");
+	const [amount, setAmount] = useState(params?.amount?.replace(/,/g, "") || "");
 	const [remark, setRemark] = useState("");
 	const [loading, setLoading] = useState(false);
 	const [favoritesLoading, setFavoritesLoading] = useState(false);
