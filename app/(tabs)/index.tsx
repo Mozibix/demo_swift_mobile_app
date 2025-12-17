@@ -298,7 +298,7 @@ function Index() {
     try {
       await apiService.storeUserPushToken(
         pushToken.data,
-        modelName ?? `${user?.first_name} ${Platform.OS} device`,
+        modelName ?? `${user?.first_name} ${Platform.OS} device`
       );
     } catch (error: _TSFixMe) {
       showLogs("saveUserPushToken error", error.response);
@@ -317,7 +317,7 @@ function Index() {
         setBiometricType("Fingerprint");
       } else if (
         types.includes(
-          LocalAuthentication.AuthenticationType.FACIAL_RECOGNITION,
+          LocalAuthentication.AuthenticationType.FACIAL_RECOGNITION
         )
       ) {
         setBiometricType("Face");
@@ -366,7 +366,7 @@ function Index() {
         useNativeDriver: true,
       }).start(() => {
         setCurrentSubtitleIndex(
-          (prevIndex) => (prevIndex + 1) % subtitles.length,
+          (prevIndex) => (prevIndex + 1) % subtitles.length
         );
         Animated.timing(fadeAnim, {
           toValue: 1,
@@ -516,7 +516,7 @@ function Index() {
       if (response.status === 200) {
         await AsyncStorage.setItem(
           "UserDetails",
-          JSON.stringify(response.data.data),
+          JSON.stringify(response.data.data)
         );
         // showLogs("user deets", response.data.data);
         setUserProfile(response.data.data);
@@ -524,7 +524,7 @@ function Index() {
         setConvertedBalance(response.data.data.wallet_balance);
         await AsyncStorage.setItem(
           "WalletBalance",
-          JSON.stringify(response.data.data.wallet_balance),
+          JSON.stringify(response.data.data.wallet_balance)
         );
         setError(null);
       }
@@ -627,7 +627,7 @@ function Index() {
       setVisible(false);
       fadeIn();
       return () => fadeOut();
-    }, []),
+    }, [])
   );
 
   const fadeIn = () => {
@@ -746,7 +746,7 @@ function Index() {
       <View
         className={cn(
           "flex-row justify-between items-center mx-2 sm:mx-4 mb-2 sm:mb-3",
-          IS_ANDROID_DEVICE && "mt-10",
+          IS_ANDROID_DEVICE && "mt-10"
         )}
       >
         <View className="flex-row mt-4 sm:mt-8 justify-center items-center p-4">
@@ -796,8 +796,8 @@ function Index() {
             {profileLoading
               ? "..."
               : userProfile?.first_name
-                ? shortenText(userProfile.first_name, 12)
-                : "User!"}
+              ? shortenText(userProfile.first_name, 12)
+              : "User!"}
           </Text>
         </View>
         <View className="flex-row gap-3 sm:gap-4 mt-4 sm:mt-8 mr-4">
@@ -1009,8 +1009,8 @@ function Index() {
                           task.status === "unverified"
                             ? "#FFE5CC"
                             : task.status === "pending"
-                              ? "#fdf6b2"
-                              : "#fde8e8",
+                            ? "#fdf6b2"
+                            : "#fde8e8",
                       }}
                     >
                       <Text
@@ -1020,8 +1020,8 @@ function Index() {
                             task.status === "unverified"
                               ? "#FF9500"
                               : task.status === "pending"
-                                ? "#723b13"
-                                : "#c81e1e",
+                              ? "#723b13"
+                              : "#c81e1e",
                         }}
                       >
                         {task.status}

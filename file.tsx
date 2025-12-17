@@ -17,7 +17,7 @@ const HardCurrencyDetails = () => {
     { date: "5 Dec", open: 280, high: 300, low: 270, close: 290 },
   ];
 
-  const renderCandlestick = ({ item }) => {
+  const renderCandlestick = ({ item }: any) => {
     const isPositive = item.close >= item.open;
     return (
       <View style={styles.candleContainer}>

@@ -8,7 +8,7 @@ import {
   Alert,
 } from "react-native";
 import SvgQRCode from "react-native-qrcode-svg";
-import ViewShot, { ViewShot as ViewShotType } from "react-native-view-shot";
+import ViewShot from "react-native-view-shot";
 import * as Sharing from "expo-sharing"; // Importing expo-sharing
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -17,7 +17,7 @@ const Myqrcode = () => {
   const [userName, setUserName] = useState("Adeagbo Josiah");
   const [swiftPayTag, setSwiftPayTag] = useState("@josiah123");
   const [qrValue, setQrValue] = useState(`${userName} - ${swiftPayTag}`);
-  const viewShotRef = useRef<ViewShotType>(null);
+  const viewShotRef = useRef<any>(null);
 
   useEffect(() => {
     // Fetch user name and SwiftPay tag from an API or AsyncStorage if necessary
