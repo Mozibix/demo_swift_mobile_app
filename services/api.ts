@@ -27,7 +27,7 @@ api.interceptors.request.use(
   },
   (error) => {
     return Promise.reject(error);
-  },
+  }
 );
 
 // Add a response interceptor
@@ -39,7 +39,7 @@ api.interceptors.response.use(
       useAuthStore.getState().logout();
     }
     return Promise.reject(error);
-  },
+  }
 );
 
 // Types
@@ -555,11 +555,7 @@ export type Holding = {
 
 // Custom error type
 export class APIError extends Error {
-  constructor(
-    message: string,
-    public status?: number,
-    public data?: any,
-  ) {
+  constructor(message: string, public status?: number, public data?: any) {
     super(message);
     this.name = "APIError";
   }
@@ -574,7 +570,7 @@ const handleApiError = (error: any): never => {
         axiosError.message ||
         "An error occurred",
       axiosError.response?.status,
-      axiosError.response?.data,
+      axiosError.response?.data
     );
   }
   throw new APIError(error.message || "An unexpected error occurred");
@@ -702,11 +698,11 @@ export const apiService = {
 
   verifyBankAccount: async (
     bank_code: string,
-    account_number: string,
+    account_number: string
   ): Promise<BankVerificationResponse> => {
     try {
       const response = await api.get(
-        `/bank-transfer/verify-customer?bank_code=${bank_code}&account_number=${account_number}`,
+        `/bank-transfer/verify-customer?bank_code=${bank_code}&account_number=${account_number}`
       );
 
       // console.log("Bank Verification Response:", { response });
@@ -753,7 +749,7 @@ export const apiService = {
   },
 
   multipleBankTransfer: async (
-    payload: MultipleTransferPayload,
+    payload: MultipleTransferPayload
   ): Promise<any> => {
     try {
       const response = await api.post(`/multiple-bank-transfer`, payload);
@@ -767,7 +763,7 @@ export const apiService = {
   getGiftCardCountries: async (query?: string): Promise<any> => {
     try {
       const response = await api.get(
-        `/gift-cards/countries${query ? `?query=${query}` : ""}`,
+        `/gift-cards/countries${query ? `?query=${query}` : ""}`
       );
 
       return response.data;
@@ -784,7 +780,7 @@ export const apiService = {
           query
             ? `?country_code=${countryCode}&query=${query}`
             : `?country_code=${countryCode}`
-        }`,
+        }`
       );
 
       return response.data;
@@ -801,7 +797,7 @@ export const apiService = {
   getGiftCardProduct: async (productId: string) => {
     try {
       const response = await api.get(
-        `/gift-cards/products/show?product_id=${productId}`,
+        `/gift-cards/products/show?product_id=${productId}`
       );
 
       return response.data;
@@ -814,11 +810,11 @@ export const apiService = {
   checkGiftCardPrice: async (
     productId: string,
     amount: number | string,
-    quantity: number,
+    quantity: number
   ) => {
     try {
       const response = await api.get(
-        `/gift-cards/products/check-price?product_id=${productId}&amount=${amount}&quantity=${quantity}`,
+        `/gift-cards/products/check-price?product_id=${productId}&amount=${amount}&quantity=${quantity}`
       );
 
       return response.data;
@@ -935,11 +931,11 @@ export const apiService = {
   },
 
   getBuyCryptoPage: async (
-    crypto_id: number,
+    crypto_id: number
   ): Promise<BuyCryptoPageResponse> => {
     try {
       const response = await api.get(
-        `/crypto-exchange/buy-crypto-page?crypto_id=${crypto_id}`,
+        `/crypto-exchange/buy-crypto-page?crypto_id=${crypto_id}`
       );
       // showLogs("Buy Crypto Page Response:", response.data);
       return response.data;
@@ -960,7 +956,7 @@ export const apiService = {
         {
           amount,
           nairaRate,
-        },
+        }
       );
       // console.log("Calculate Naira Amount Response:", response.data);
       return response.data.data;
@@ -982,7 +978,7 @@ export const apiService = {
           data.amount
         }&amount_in_naira=${data.nairaAmount}&currency_code=${
           data.currency_code || "usdt"
-        }&crypto_network=${data.crypto_network}`,
+        }&crypto_network=${data.crypto_network}`
       );
       // console.log("Create Crypto Order Response:", response.data);
       return response.data.data;
@@ -1008,7 +1004,7 @@ export const apiService = {
     try {
       const response = await api.post(
         `/crypto-exchange/submit-buy-order`,
-        data,
+        data
       );
       return response.data;
     } catch (error) {
@@ -1058,7 +1054,7 @@ export const apiService = {
   },
 
   getInvestmentDetails: async (
-    hashId: string,
+    hashId: string
   ): Promise<InvestmentDetailsResponse> => {
     const response = await api.get(`/investments/${hashId}`);
     return response.data;
@@ -1078,7 +1074,7 @@ export const apiService = {
   getCryptoAssetDetails: async (cryptoId: string | number) => {
     try {
       const response = await api.get(
-        `/investments/assets/crypto-details?crypto_id=${cryptoId}`,
+        `/investments/assets/crypto-details?crypto_id=${cryptoId}`
       );
       return response.data;
     } catch (error) {
@@ -1090,7 +1086,7 @@ export const apiService = {
   getStockAssetDetails: async (stockSymbol: string) => {
     try {
       const response = await api.get(
-        `/investments/assets/stock-details?stock_symbol=${stockSymbol}`,
+        `/investments/assets/stock-details?stock_symbol=${stockSymbol}`
       );
       return response.data;
     } catch (error) {
@@ -1121,7 +1117,7 @@ export const apiService = {
 
   verifySwiftpayUser: async (username: string) => {
     const response = await api.get(
-      `/swiftpay-transfer/verify-user?username=${username}`,
+      `/swiftpay-transfer/verify-user?username=${username}`
     );
     return response.data;
   },
@@ -1141,7 +1137,7 @@ export const apiService = {
       "/bank-transfer/beneficiaries/toggle-favorite",
       {
         transfer_id,
-      },
+      }
     );
     return response.data;
   },
@@ -1151,14 +1147,14 @@ export const apiService = {
       "/swiftpay-transfer/beneficiaries/toggle-favorite",
       {
         user_id,
-      },
+      }
     );
     return response.data;
   },
 
   markNotificationAsRead: async (notification_id: string) => {
     const response = await api.post(
-      `/notifications/mark-as-read/${notification_id}`,
+      `/notifications/mark-as-read/${notification_id}`
     );
     return response.data;
   },
@@ -1186,7 +1182,7 @@ export const apiService = {
   },
 
   groupSavingsInvite: async (
-    invite_code: string,
+    invite_code: string
   ): Promise<GroupInvitationResponse> => {
     try {
       const response = await api.get(`/group-savings/invite/${invite_code}`);
@@ -1423,17 +1419,17 @@ export const bureauDeChangeApi = {
 
   getBuyCurrencyPage: async (currencyId: number) => {
     const response = await api.get(
-      `/bureau-da-change/buy-currency-page?currency_id=${currencyId}`,
+      `/bureau-da-change/buy-currency-page?currency_id=${currencyId}`
     );
     return response.data;
   },
 
   getCurrencyDetails: async (
-    currencyCode: string,
+    currencyCode: string
   ): Promise<CurrencyDetails> => {
     try {
       const response = await api.get(
-        `/bureau-da-change/buy-fx/${currencyCode}`,
+        `/bureau-da-change/buy-fx/${currencyCode}`
       );
       return response.data;
     } catch (error) {
@@ -1444,7 +1440,7 @@ export const bureauDeChangeApi = {
   validateAmount: async (data: { amount: number; currency_code: string }) => {
     const response = await api.post(
       "/bureau-da-change/buy-fx/validate-amount",
-      data,
+      data
     );
     return response.data;
   },
@@ -1457,7 +1453,7 @@ export const bureauDeChangeApi = {
   }) => {
     const response = await api.post(
       "/bureau-da-change/submit-buy-fx-order",
-      data,
+      data
     );
     return response.data;
   },
@@ -1479,7 +1475,7 @@ export const bureauDeChangeApi = {
   }) => {
     const response = await api.post(
       "/bureau-da-change/sell-fx/calculate-naira-amount",
-      data,
+      data
     );
     return response.data;
   },
@@ -1492,7 +1488,7 @@ export const bureauDeChangeApi = {
   }) => {
     const response = await api.post(
       "/bureau-da-change/sell-fx/submit-order",
-      data,
+      data
     );
     return response.data;
   },
@@ -1505,11 +1501,11 @@ export const bureauDeChangeApi = {
   },
 
   getSellCurrencyPage: async (
-    currencyId: number,
+    currencyId: number
   ): Promise<SellCurrencyDetails> => {
     try {
       const response = await api.get(
-        `/bureau-da-change/sell-currency-page?currency_id=${currencyId}`,
+        `/bureau-da-change/sell-currency-page?currency_id=${currencyId}`
       );
       return response.data.data;
     } catch (error) {
@@ -1526,7 +1522,7 @@ export const bureauDeChangeApi = {
           headers: {
             "Content-Type": "multipart/form-data",
           },
-        },
+        }
       );
       return response.data;
     } catch (error) {
@@ -1543,7 +1539,7 @@ export const bureauDeChangeApi = {
           headers: {
             "Content-Type": "multipart/form-data",
           },
-        },
+        }
       );
       return response.data;
     } catch (error) {
@@ -1587,7 +1583,7 @@ export const ajoSavingsApi = {
   getAjoSavingsTransactionHistory: async (id: string) => {
     try {
       const response = await api.get(
-        `/ajo-savings/transactions?ajo_savings_id=${id}`,
+        `/ajo-savings/transactions?ajo_savings_id=${id}`
       );
       return response.data.data;
     } catch (error) {
@@ -1640,7 +1636,7 @@ export const cryptoExchangeApi = {
   getSellCryptoPage: async (cryptoId: string | number): Promise<any> => {
     try {
       const response = await api.get(
-        `/crypto-exchange/sell-crypto-page?crypto_id=${cryptoId}`,
+        `/crypto-exchange/sell-crypto-page?crypto_id=${cryptoId}`
       );
       // console.log("Sell Crypto Page Response:", response.data);
       return response.data;
@@ -1657,7 +1653,7 @@ export const cryptoExchangeApi = {
     try {
       const response = await api.post(
         "/crypto-exchange/generate-payment-address",
-        data,
+        data
       );
       // console.log("Generate Payment Address Response:", response.data);
       return response.data;
@@ -1678,7 +1674,7 @@ export const cryptoExchangeApi = {
     try {
       const response = await api.post(
         "/crypto-exchange/submit-sell-order",
-        data,
+        data
       );
       // console.log("Submit Sell Order Response:", response.data);
       return response.data;

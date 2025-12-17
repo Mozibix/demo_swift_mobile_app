@@ -20,6 +20,14 @@
         "image": "latest"
       },
       "channel": "production"
+    },
+    "apk": {
+      "autoIncrement": true,
+      "android": {
+        "buildType": "apk",
+        "image": "latest"
+      },
+      "channel": "production"
     }
   },
   "submit": {
