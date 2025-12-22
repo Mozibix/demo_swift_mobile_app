@@ -469,6 +469,9 @@ function RootLayoutNav() {
 									<Stack.Screen name="Payback" options={{ headerShown: false }} />
 									<Stack.Screen name="Privacy" options={{ headerShown: false }} />
 									<Stack.Screen name="Betting" options={{ headerShown: false }} />
+									<Stack.Screen name="BettingHistory" options={{ headerShown: false }} />
+									<Stack.Screen name="PaymentLink" options={{ headerShown: false }} />
+									<Stack.Screen name="CreatePaymentLink" options={{ headerShown: false }} />
 								</Stack>
 								<Toast visibilityTime={4000} />
 							</View>
