@@ -26,6 +26,20 @@ const AllMultipleBanks: React.FC = () => {
   const { bankRecipients, removeBankRecipient, getTotalBankAmount } =
     useMultipleTransfer();
 
+  // Filter duplicates based on account number, account name, and amount
+  const uniqueBankRecipients = bankRecipients
+    .filter((r) => r.amount !== "")
+    .filter(
+      (recipient, index, self) =>
+        index ===
+        self.findIndex(
+          (r) =>
+            r.account_number === recipient.account_number &&
+            r.amount === recipient.amount &&
+            r.bank_name === recipient.bank_name
+        )
+    );
+
   // State to manage tab selection
   const [selectedTab, setSelectedTab] = useState("Recent"); // Default to 'Recent'
 
@@ -79,7 +93,7 @@ const AllMultipleBanks: React.FC = () => {
   };
 
   function handleSendRedirect() {
-    if (bankRecipients.length < 2) {
+    if (uniqueBankRecipients.length < 2) {
       return showErrorToast({
         title: "Not Allowed",
         desc: "A minimum of 2 receipients are required for multiple transfers",
@@ -113,7 +127,7 @@ const AllMultipleBanks: React.FC = () => {
         showsVerticalScrollIndicator={false}
         style={{ marginHorizontal: IS_ANDROID_DEVICE ? 0 : 15 }}
       >
-        {bankRecipients.map((recipient) => (
+        {uniqueBankRecipients.map((recipient) => (
           <View style={styles.users} key={recipient.account_number}>
             <View className="bg-[#c6d9ff] p-3 rounded-full">
               <FontAwesome name="bank" size={19} color="#1400FB" />
@@ -129,7 +143,7 @@ const AllMultipleBanks: React.FC = () => {
               <Pressable
                 onPress={() => {
                   removeBankRecipient(recipient.account_number);
-                  if (bankRecipients.length === 1) {
+                  if (uniqueBankRecipients.length === 1) {
                     router.back();
                   }
                 }}

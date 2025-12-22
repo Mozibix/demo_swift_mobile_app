@@ -1,5 +1,5 @@
-import { AntDesign, FontAwesome } from "@expo/vector-icons";
-import { router } from "expo-router";
+import { AntDesign, FontAwesome, MaterialIcons } from "@expo/vector-icons";
+import { router, useLocalSearchParams } from "expo-router";
 import React, { useRef, useState, useEffect, Fragment } from "react";
 import {
   View,
@@ -27,7 +27,7 @@ import { showLogs } from "@/utils/logger";
 import PinComponent from "@/components/ui/PinComponent";
 import { pink600 } from "react-native-paper/lib/typescript/styles/themes/v2/colors";
 import useDataStore from "@/stores/useDataStore";
-import { _TSFixMe, getInitials } from "@/utils";
+import { _TSFixMe, calculateSimilarity, getInitials } from "@/utils";
 import KAScrollView from "@/components/ui/KAScrollView";
 import LoadingComp from "@/components/Loading";
 import { DEFAULT_PIN } from "@/constants";
@@ -40,7 +40,14 @@ import { COLORS } from "@/constants/Colors";
 
 const { height } = Dimensions.get("window");
 
+interface BankAccount {
+  bankName: string;
+  accountNumber: string;
+}
+
 const SingleBankTransfer: React.FC = () => {
+  const params = useLocalSearchParams();
+
   const toast = useToast();
   const [selectedBank, setSelectedBank] = useState({
     name: "",
@@ -71,6 +78,9 @@ const SingleBankTransfer: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const { verifyPin, displayLoader, hideLoader } = useAuth();
   const manualInputRef = useRef(true);
+  const [preFilledAccount, setPreFilledAccount] = useState<BankAccount | null>(
+    null
+  );
 
   const { transferSource } = useMultipleTransfer();
 
@@ -417,6 +427,63 @@ const SingleBankTransfer: React.FC = () => {
     await handleTransfer(pin);
   };
 
+  useEffect(() => {
+    if (params.account && banks.length > 0) {
+      try {
+        const account = JSON.parse(params.account as string);
+
+        setPreFilledAccount(account);
+
+        const bankName = account.bankName?.trim();
+
+        if (bankName) {
+          let matchedBank = banks.find(
+            (b) => b.name.toLowerCase().trim() === bankName.toLowerCase()
+          );
+
+          // If no exact match, find the most similar one
+          if (!matchedBank) {
+            let bestMatch = banks[0];
+            let bestSimilarity = calculateSimilarity(bankName, banks[0].name);
+
+            for (let i = 1; i < banks.length; i++) {
+              const similarity = calculateSimilarity(bankName, banks[i].name);
+              if (similarity > bestSimilarity) {
+                bestSimilarity = similarity;
+                bestMatch = banks[i];
+              }
+            }
+
+            if (bestSimilarity > 0.6) {
+              matchedBank = bestMatch;
+              showLogs("Using fuzzy matched bank", {
+                inputName: bankName,
+                matchedName: matchedBank.name,
+                similarity: bestSimilarity,
+              });
+            }
+          }
+
+          if (matchedBank) {
+            setSelectedBank({ name: matchedBank.name, code: matchedBank.code });
+            showLogs("Bank found and set", {
+              name: matchedBank.name,
+              code: matchedBank.code,
+            });
+          } else {
+            setSelectedBank({ name: bankName, code: "" });
+            showLogs("Bank not found, user must verify", { bankName });
+          }
+        }
+
+        setAccountNumber(account.accountNumber);
+        handleAccountNumberChange(account.accountNumber);
+      } catch (error) {
+        console.error("Error parsing account data:", error);
+      }
+    }
+  }, [params.account, banks]);
+
   const [isChecked, setIsChecked] = useState(true);
 
   const toggleCheckbox = () => {
@@ -435,7 +502,6 @@ const SingleBankTransfer: React.FC = () => {
     setShowBanks(false);
     setSearchQuery("");
     setRecipientName("");
-    setAccountNumber("");
   };
 
   const renderBankCard = ({ item }: { item: _TSFixMe }) => (
@@ -546,7 +612,7 @@ const SingleBankTransfer: React.FC = () => {
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
-          onPress={() => router.back()}
+          onPress={() => router.push("/transfer")}
         >
           <AntDesign name="arrowleft" size={24} color="#000" />
         </TouchableOpacity>
@@ -570,22 +636,46 @@ const SingleBankTransfer: React.FC = () => {
             </Pressable>
           </View>
 
-          <TextInput
-            style={styles.input}
-            value={selectedBank?.name || ""}
-            editable={false}
-          />
+          <View style={styles.tagInputContainer}>
+            <TextInput
+              style={styles.tagInput}
+              value={selectedBank?.name || ""}
+              editable={false}
+            />
+
+            <TouchableOpacity
+              onPress={() => {
+                router.push({ pathname: "/AccountScannerScreen" });
+              }}
+            >
+              <MaterialIcons name="qr-code" size={23} color="#1400FB" />
+            </TouchableOpacity>
+          </View>
 
           <Text style={styles.label}>Account Number</Text>
-          <TextInput
-            style={[styles.input, accountNumber ? styles.filledInput : null]}
-            placeholder="Enter account number"
-            value={accountNumber}
-            onChangeText={handleAccountNumberChange}
-            keyboardType="numeric"
-            maxLength={10}
-            placeholderTextColor="#AAA"
-          />
+
+          <View style={styles.tagInputContainer}>
+            <TextInput
+              style={[
+                styles.tagInput,
+                accountNumber ? styles.filledInput : null,
+              ]}
+              placeholder="Enter account number"
+              value={accountNumber}
+              onChangeText={handleAccountNumberChange}
+              keyboardType="numeric"
+              maxLength={10}
+              placeholderTextColor="#AAA"
+            />
+
+            <TouchableOpacity
+              onPress={() => {
+                router.push({ pathname: "/AccountScannerScreen" });
+              }}
+            >
+              <MaterialIcons name="qr-code" size={23} color="#1400FB" />
+            </TouchableOpacity>
+          </View>
 
           {accountNumber && accountNumber?.length === 10 && recipientName && (
             <View style={styles.recipientContainer}>
@@ -1874,6 +1964,22 @@ const styles = StyleSheet.create({
     borderTopColor: "#eee",
     paddingTop: 10,
     marginTop: 10,
+  },
+
+  tagInputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 10,
+    marginBottom: 10,
+    paddingHorizontal: 15,
+  },
+  tagInput: {
+    flex: 1,
+    padding: 15,
+    fontSize: 16,
+    color: "#000",
   },
 });
 

@@ -11,6 +11,9 @@ import {
   StatusBar,
   TextInput,
   Modal,
+  TouchableWithoutFeedback,
+  Keyboard,
+  Platform,
 } from "react-native";
 import SvgQRCode from "react-native-qrcode-svg";
 import ViewShot from "react-native-view-shot";
@@ -21,8 +24,11 @@ import { apiService } from "@/services/api";
 import Button from "@/components/ui/Button";
 import { COLORS } from "@/constants/Colors";
 import { useAuth } from "@/context/AuthContext";
-import { ActivityIndicator } from "react-native-paper";
 import SkeletonLoader from "@/components/SkeletonLoader";
+import { KeyboardAvoidingView } from "react-native";
+import Toast from "react-native-toast-message";
+import { LinearGradient } from "expo-linear-gradient";
+import { ActivityIndicator } from "react-native-paper";
 
 interface UserProfile {
   first_name: string;
@@ -111,23 +117,38 @@ const QrCodeMain = () => {
   };
 
   const handleShareQR = async () => {
-    if (shareViewShotRef.current && shareViewShotRef.current.capture) {
+    handleGenerateQR();
+    if (
+      shareViewShotRef.current &&
+      shareViewShotRef.current.capture &&
+      userProfile
+    ) {
       try {
         const uri = await shareViewShotRef.current.capture();
-        const amountText =
-          amount && parseFloat(amount) > 0 ? ` for ₦${amount}` : "";
+
         const shareOptions = {
-          title: `${userName}'s SwiftPay QR Code`,
+          title: `${userProfile.first_name}'s SwiftPay QR Code`,
           url: uri,
-          message: `${userName}'s SwiftPay tag is ${swiftPayTag}. Scan this QR code to send money${amountText}!`,
+          message: `My SwiftPay tag is @${userProfile.username}. Scan this QR code to send me money instantly!`,
         };
 
         await Sharing.shareAsync(uri, {
           dialogTitle: shareOptions.title,
           UTI: "public.png",
+          mimeType: "image/png",
         });
+
+        console.log("Shared QR code successfully");
       } catch (err) {
         console.error("Error capturing or sharing:", err);
+        Toast.show({
+          type: "error",
+          position: "top",
+          text1: "Error",
+          // text2: "Failed to share your QR code. Please try again.",
+          text2: `${err}`,
+          visibilityTime: 3000,
+        });
       }
     }
   };
@@ -140,12 +161,6 @@ const QrCodeMain = () => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      {/* {loading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={COLORS.swiftPayBlue} />
-          <Text style={styles.loadingText}>Loading profile...</Text>
-        </View>
-      ) : ( */}
       <>
         <Modal
           animationType="slide"
@@ -153,64 +168,137 @@ const QrCodeMain = () => {
           visible={showAmountModal}
           onRequestClose={() => setShowAmountModal(false)}
         >
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>Set Amount</Text>
-                <TouchableOpacity onPress={() => setShowAmountModal(false)}>
-                  <Ionicons name="close" size={24} color="#000" />
-                </TouchableOpacity>
+          <KeyboardAvoidingView
+            style={{ flex: 1 }}
+            behavior={Platform.OS === "ios" ? "padding" : undefined}
+          >
+            <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
+              <View style={styles.modalOverlay}>
+                <View style={styles.modalContent}>
+                  <View style={styles.modalHeader}>
+                    <Text style={styles.modalTitle}>Set Amount</Text>
+                    <TouchableOpacity onPress={() => setShowAmountModal(false)}>
+                      <Ionicons name="close" size={24} color="#000" />
+                    </TouchableOpacity>
+                  </View>
+                  <Text style={styles.modalDescription}>
+                    Enter the amount you want to receive (optional)
+                  </Text>
+                  <View style={styles.amountInputContainer}>
+                    <Text style={styles.currencySymbol}>₦</Text>
+                    <TextInput
+                      style={styles.amountInput}
+                      placeholder="0.00"
+                      placeholderTextColor="#999"
+                      keyboardType="decimal-pad"
+                      value={amount.toLocaleString()}
+                      onChangeText={handleAmountChange}
+                      maxLength={10}
+                    />
+                  </View>
+                  <View style={styles.remarksInputContainer}>
+                    <Text style={styles.remarksLabel}>Remarks (optional)</Text>
+                    <TextInput
+                      style={styles.remarksInput}
+                      placeholder="Enter remarks (optional)"
+                      placeholderTextColor="#999"
+                      multiline={true}
+                      numberOfLines={4}
+                      value={remarks}
+                      onChangeText={setRemarks}
+                      maxLength={200}
+                    />
+                  </View>
+                  <View style={styles.modalButtons}>
+                    <TouchableOpacity
+                      style={[styles.modalButton, styles.skipButton]}
+                      onPress={() => {
+                        setAmount("");
+                        handleGenerateQR();
+                      }}
+                    >
+                      <Text style={styles.skipButtonText}>Skip Amount</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.modalButton, styles.generateButton]}
+                      onPress={handleGenerateQR}
+                    >
+                      <Text style={styles.generateButtonText}>Confirm</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
               </View>
-              <Text style={styles.modalDescription}>
-                Enter the amount you want to receive (optional)
-              </Text>
-              <View style={styles.amountInputContainer}>
-                <Text style={styles.currencySymbol}>₦</Text>
-                <TextInput
-                  style={styles.amountInput}
-                  placeholder="0.00"
-                  placeholderTextColor="#999"
-                  keyboardType="decimal-pad"
-                  value={amount.toLocaleString()}
-                  onChangeText={handleAmountChange}
-                  maxLength={10}
-                />
-              </View>
-              <View style={styles.remarksInputContainer}>
-                <Text style={styles.remarksLabel}>Remarks (optional)</Text>
-                <TextInput
-                  style={styles.remarksInput}
-                  placeholder="Enter remarks (optional)"
-                  placeholderTextColor="#999"
-                  multiline={true}
-                  numberOfLines={4}
-                  value={remarks}
-                  onChangeText={setRemarks}
-                  maxLength={200}
-                />
-              </View>
-              <View style={styles.modalButtons}>
-                <TouchableOpacity
-                  style={[styles.modalButton, styles.skipButton]}
-                  onPress={() => {
-                    setAmount("");
-                    handleGenerateQR();
-                  }}
-                >
-                  <Text style={styles.skipButtonText}>Skip Amount</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.modalButton, styles.generateButton]}
-                  onPress={handleGenerateQR}
-                >
-                  <Text style={styles.generateButtonText}>Confirm</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
+            </TouchableWithoutFeedback>
+          </KeyboardAvoidingView>
         </Modal>
         {/* Hidden component for sharing */}
         <ViewShot
+          ref={shareViewShotRef}
+          options={{ format: "png", quality: 0.9 }}
+          style={styles.hiddenShareView}
+        >
+          <LinearGradient
+            colors={["#0047cc", "#0066ff", "#0080ff"]}
+            style={styles.cardBackground}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+          >
+            <View style={styles.cardHeader}>
+              <Image
+                source={require("../assets/icons/icon.png")}
+                style={styles.cardHeaderLogo}
+              />
+              <Text style={styles.cardTitle}>SwiftPay</Text>
+            </View>
+
+            <View style={styles.userInfoSection}>
+              <Text style={styles.shareUserName}>{fullName}</Text>
+              <Text style={styles.shareTag}>{swiftPayTag}</Text>
+              {displayAmount && (
+                <View style={styles.shareAmountBadge}>
+                  <Text style={styles.shareAmountText}>{displayAmount}</Text>
+                </View>
+              )}
+            </View>
+
+            <View style={styles.qrCodeContainer}>
+              {userProfile ? (
+                <View style={styles.qrWrapper}>
+                  <SvgQRCode
+                    value={qrValue}
+                    size={220}
+                    backgroundColor="white"
+                    color="#0033cc"
+                    logo={require("../assets/icons/icon.png")}
+                    logoSize={40}
+                    logoBackgroundColor="white"
+                    logoMargin={5}
+                    logoBorderRadius={10}
+                  />
+                </View>
+              ) : (
+                <ActivityIndicator size="large" color="white" />
+              )}
+            </View>
+
+            <Text style={styles.scanInstructions}>
+              Scan to send money instantly
+            </Text>
+
+            <View style={styles.cardFooter}>
+              <Image
+                source={require("../assets/icons/icon.png")}
+                style={styles.cardFooterLogo}
+                resizeMode="contain"
+              />
+              <Text style={styles.cardFooterText}>
+                Secure • Fast • Reliable
+              </Text>
+            </View>
+          </LinearGradient>
+        </ViewShot>
+
+        {/* <ViewShot
           ref={shareViewShotRef}
           options={{ format: "png", quality: 0.9 }}
           style={styles.hiddenShareView}
@@ -255,7 +343,7 @@ const QrCodeMain = () => {
               </Text>
             </View>
           </View>
-        </ViewShot>
+        </ViewShot> */}
 
         <ScrollView
           style={styles.container}
@@ -464,6 +552,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "700",
     marginBottom: 5,
+    color: "white",
   },
   swiftPayTag: {
     fontSize: 16,
@@ -645,8 +734,7 @@ const styles = StyleSheet.create({
   // Share view styles
   hiddenShareView: {
     position: "absolute",
-    width: 375,
-    height: 667,
+    width: "100%",
     opacity: 0,
   },
   shareContainer: {
@@ -721,6 +809,110 @@ const styles = StyleSheet.create({
   },
   shareFooterText: {
     color: "white",
+    fontSize: 16,
+  },
+
+  shareableCard: {
+    width: "100%",
+    borderRadius: 16,
+    overflow: "hidden",
+  },
+  cardBackground: {
+    width: "100%",
+    padding: 20,
+    alignItems: "center",
+  },
+  cardHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 5,
+    width: "100%",
+  },
+  cardHeaderLogo: {
+    width: 30,
+    height: 30,
+    marginRight: 8,
+  },
+  cardTitle: {
+    fontSize: 22,
+    fontWeight: "bold",
+    color: "white",
+  },
+  userInfoSection: {
+    alignItems: "center",
+    marginVertical: 12,
+  },
+
+  userTag: {
+    fontSize: 18,
+    color: "rgba(255, 255, 255, 0.9)",
+    marginBottom: 15,
+  },
+  qrCodeContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    width: "100%",
+    marginBottom: 12,
+  },
+  qrWrapper: {
+    padding: 15,
+    backgroundColor: "white",
+    borderRadius: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  scanInstructions: {
+    fontSize: 16,
+    color: "white",
+    textAlign: "center",
+    marginTop: 15,
+    marginBottom: 20,
+    fontWeight: "500",
+  },
+  cardFooter: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 10,
+    paddingTop: 15,
+    borderTopWidth: 1,
+    borderTopColor: "rgba(255, 255, 255, 0.3)",
+    width: "100%",
+  },
+  cardFooterLogo: {
+    width: 20,
+    height: 20,
+    marginRight: 10,
+    tintColor: "rgba(255, 255, 255, 0.9)",
+  },
+  cardFooterText: {
+    fontSize: 14,
+    color: "rgba(255, 255, 255, 0.9)",
+    fontWeight: "500",
+  },
+  shareButton: {
+    flexDirection: "row",
+    backgroundColor: COLORS.swiftPayBlue,
+    paddingVertical: 12,
+    paddingHorizontal: 25,
+    borderRadius: 25,
+    marginTop: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  shareButtonText: {
+    color: "white",
+    fontWeight: "bold",
+    marginLeft: 8,
     fontSize: 16,
   },
 });

@@ -1,5 +1,5 @@
-import { AntDesign, FontAwesome } from "@expo/vector-icons";
-import { router } from "expo-router";
+import { AntDesign, FontAwesome, MaterialIcons } from "@expo/vector-icons";
+import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   View,
@@ -15,6 +15,7 @@ import {
   FlatList,
   Pressable,
 } from "react-native";
+import * as SecureStore from "expo-secure-store";
 import { BottomSheet } from "@rneui/themed";
 import {
   apiService,
@@ -31,13 +32,21 @@ import { useMultipleTransfer } from "@/context/MultipleTransferContext";
 import useDataStore, { Bank } from "@/stores/useDataStore";
 import RecentTransfers from "@/components/recent_transfers/recent-transfers";
 import KAScrollView from "@/components/ui/KAScrollView";
-import { _TSFixMe, cn } from "@/utils";
+import { _TSFixMe, calculateSimilarity, cn } from "@/utils";
 import { IS_ANDROID_DEVICE } from "@/constants";
 import { COLORS } from "@/constants/Colors";
 import Favorites from "@/components/recent_transfers/favourites";
-// Import the BottomSheet component from react-native-elements
+
+interface BankAccount {
+  bankName: string;
+  accountNumber: string;
+}
 
 const MultipleBankTransfer: React.FC = () => {
+  const params = useLocalSearchParams();
+  const [preFilledAccounts, setPreFilledAccounts] = useState<BankAccount[]>([]);
+  const [currentAccountIndex, setCurrentAccountIndex] = useState(0);
+
   const [swiftPayTag, setSwiftPayTag] = useState("");
   const [bank, setBank] = useState("");
   const [showBanks, setShowBanks] = useState(false);
@@ -58,52 +67,163 @@ const MultipleBankTransfer: React.FC = () => {
   const getBankTransferData = useDataStore(
     (state) => state.getBankTransferData
   );
+  const [banks, setBanks] = useState<Bank[]>([]);
 
-  // State to manage tab selection
   const [selectedTab, setSelectedTab] = useState("Recent");
 
-  // State variables for bottom sheet visibility
   const [isPaymentSummaryVisible, setIsPaymentSummaryVisible] = useState(false);
   const [isTransactionPinVisible, setIsTransactionPinVisible] = useState(false);
   const [isSuccessVisible, setIsSuccessVisible] = useState(false);
   const manualInputRef = useRef(true);
 
+  // Initialize with scanned accounts data
+  // useEffect(() => {
+  //   if (params.accounts) {
+  //     try {
+  //       const accounts = JSON.parse(params.accounts as string);
+  //       setPreFilledAccounts(accounts);
+  //       // Pre-fill first account
+  //       if (accounts.length > 0) {
+  //         loadAccountData(accounts[0], 0);
+  //       }
+  //     } catch (error) {
+  //       console.error("Error parsing accounts data:", error);
+  //     }
+  //   }
+  // }, [params.accounts]);
+
+  const fetchBanks = async () => {
+    try {
+      const token = await SecureStore.getItemAsync("userToken");
+
+      const response = await fetch(
+        "https://swiftpaymfb.com/api/bank-transfer",
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      const data = await response.json();
+      setBanks(data.data.banks);
+    } catch (error: any) {
+      console.log("error", error.response);
+    }
+  };
+  useEffect(() => {
+    if (params.accounts && banks.length > 0) {
+      try {
+        const accounts = JSON.parse(params.accounts as string); // assuming it's an array of accounts
+        const firstAccount = accounts[0]; // pick the first account
+
+        if (firstAccount) {
+          setPreFilledAccounts(firstAccount);
+
+          // Load account data for the first account
+          loadAccountData(firstAccount, 0);
+
+          const bankName = firstAccount.bankName?.trim();
+
+          if (bankName) {
+            let matchedBank = banks.find(
+              (b) => b.name.toLowerCase().trim() === bankName.toLowerCase()
+            );
+
+            if (!matchedBank) {
+              let bestMatch = banks[0];
+              let bestSimilarity = calculateSimilarity(bankName, banks[0].name);
+
+              for (let i = 1; i < banks.length; i++) {
+                const similarity = calculateSimilarity(bankName, banks[i].name);
+                if (similarity > bestSimilarity) {
+                  bestSimilarity = similarity;
+                  bestMatch = banks[i];
+                }
+              }
+
+              if (bestSimilarity > 0.6) {
+                matchedBank = bestMatch;
+                showLogs("Using fuzzy matched bank", {
+                  inputName: bankName,
+                  matchedName: matchedBank.name,
+                  similarity: bestSimilarity,
+                });
+              }
+            }
+
+            if (matchedBank) {
+              setSelectedBank({
+                name: matchedBank.name,
+                code: matchedBank.code,
+              });
+              showLogs("Bank found and set", {
+                name: matchedBank.name,
+                code: matchedBank.code,
+              });
+            } else {
+              setSelectedBank({ name: bankName, code: "" });
+              showLogs("Bank not found, user must verify", { bankName });
+            }
+          }
+
+          setAccountNumber(firstAccount.accountNumber);
+          handleAccountNumberChange(firstAccount.accountNumber);
+        }
+      } catch (error) {
+        console.error("Error parsing account data:", error);
+      }
+    }
+  }, [params.account, banks]);
+
+  const loadAccountData = (account: BankAccount, index: number) => {
+    setCurrentAccountIndex(index);
+    setSelectedBank({ name: account.bankName, code: "" });
+    setAccountNumber(account.accountNumber);
+    setRecipientName("");
+    setAmount("");
+    setRemark("");
+    // Auto-verify the account
+    setTimeout(() => {
+      handleAccountNumberComplete(account.accountNumber, account.bankName);
+    }, 300);
+  };
+
   useEffect(() => {
     if (accountNumber.length === 10 && manualInputRef.current) {
-      handleAccountNumberComplete();
+      handleAccountNumberComplete(accountNumber, selectedBank.name);
     }
-  }, [accountNumber]);
+  }, [accountNumber, selectedBank]);
 
   const handleNext = () => {
-    setIsPaymentSummaryVisible(true); // Show the payment summary bottom sheet
+    setIsPaymentSummaryVisible(true);
   };
 
   const handlePay = () => {
-    setIsPaymentSummaryVisible(false); // Hide the payment summary bottom sheet
-    setIsTransactionPinVisible(true); // Show the transaction pin bottom sheet
+    setIsPaymentSummaryVisible(false);
+    setIsTransactionPinVisible(true);
   };
 
   const handleConfirmPayment = () => {
-    setIsTransactionPinVisible(false); // Hide the transaction pin bottom sheet
-    setIsSuccessVisible(true); // Show the success bottom sheet
+    setIsTransactionPinVisible(false);
+    setIsSuccessVisible(true);
   };
 
   const [isChecked, setIsChecked] = useState(false);
 
   const toggleCheckbox = () => {
-    setIsChecked(!isChecked); // Toggle checkbox state
+    setIsChecked(!isChecked);
   };
 
   const [otp, setOtp] = useState(["", "", "", ""]);
   const inputRefs = useRef<(TextInput | null)[]>([]);
 
   const handleOtpChange = (text: string, index: number) => {
-    // Set OTP value at the current index
     const newOtp = [...otp];
     newOtp[index] = text;
     setOtp(newOtp);
 
-    // Move to the next input
     if (text && index < 4) {
       inputRefs.current[index + 1]?.focus();
     }
@@ -111,14 +231,11 @@ const MultipleBankTransfer: React.FC = () => {
 
   const handleKeyPress = (e: any, index: number) => {
     if (e.nativeEvent.key === "Backspace" && otp[index] === "") {
-      // Move to the previous input
       if (index > 0) {
         inputRefs.current[index - 1]?.focus();
       }
     }
   };
-
-  // showLogs("allBanks", allBanks);
 
   const filteredBanks = allBanks.filter((bank) =>
     bank?.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -130,23 +247,40 @@ const MultipleBankTransfer: React.FC = () => {
     setSearchQuery("");
     setRecipient(null);
     setRecipientName("");
-    setAccountNumber("");
   };
 
-  async function handleAccountNumberComplete() {
+  async function handleAccountNumberComplete(
+    accountNum?: string,
+    bankName?: string
+  ) {
     try {
       displayLoader();
+      const numToVerify = accountNum || accountNumber;
+      const bankToUse = selectedBank.code
+        ? selectedBank
+        : {
+            name: bankName || selectedBank.name,
+            code: "",
+          };
+
+      if (!bankToUse.code) {
+        const foundBank = allBanks.find((b) => b.name === bankToUse.name);
+        if (foundBank) {
+          bankToUse.code = foundBank.code;
+        }
+      }
+
       const response = await apiService.verifyBankAccount(
-        selectedBank.code,
-        accountNumber
+        bankToUse.code,
+        numToVerify
       );
 
       setRecipientName(response.data.accountName);
       setRecipient({
         account_name: response.data.accountName,
         account_number: response.data.accountNumber,
-        bank_name: selectedBank.name,
-        bank_code: selectedBank.code,
+        bank_name: bankToUse.name,
+        bank_code: bankToUse.code,
         amount,
         fee: 0,
         description: "Multiple bank transfer",
@@ -163,16 +297,6 @@ const MultipleBankTransfer: React.FC = () => {
   }
 
   const handleAdd = () => {
-    // const existingUser = bankRecipients.find(
-    //   (r) => r.account_number === recipient?.account_number
-    // );
-    // if (existingUser) {
-    //   return showErrorToast({
-    //     desc: `User with account number '${recipient?.account_number}' already added`,
-    //   });
-    // }
-
-    console.log({ transfer_fee, recipient });
     if (recipient) {
       addBankRecipient({
         account_name: recipient.account_name,
@@ -183,7 +307,17 @@ const MultipleBankTransfer: React.FC = () => {
         fee: transfer_fee,
         description: remark ?? "Multiple transfer",
       });
-      router.push("/AllMultipleBanks");
+
+      // Load next account if available
+      if (
+        preFilledAccounts.length > 0 &&
+        currentAccountIndex < preFilledAccounts.length - 1
+      ) {
+        const nextIndex = currentAccountIndex + 1;
+        loadAccountData(preFilledAccounts[nextIndex], nextIndex);
+      } else {
+        router.push("/AllMultipleBanks");
+      }
     }
   };
 
@@ -223,6 +357,10 @@ const MultipleBankTransfer: React.FC = () => {
     }
   };
 
+  useEffect(() => {
+    fetchBanks();
+  }, []);
+
   function handleSelectFavorite(item: Favorite | SwiftpayFavorite) {
     manualInputRef.current = false;
     const itemData = item as Favorite;
@@ -251,14 +389,12 @@ const MultipleBankTransfer: React.FC = () => {
         padding: 12,
         marginVertical: 6,
         borderRadius: 8,
-        // backgroundColor: "#EFF4FF",
         backgroundColor: "#f5f5f5",
         flexDirection: "row",
         alignItems: "center",
         gap: 6,
       }}
     >
-      {/* <View className="bg-[#c6d9ff] p-3 rounded-full"> */}
       <View className="p-3 rounded-full">
         <FontAwesome name="bank" size={18} color="#5648f9" />
       </View>
@@ -272,7 +408,7 @@ const MultipleBankTransfer: React.FC = () => {
         <View style={styles.header}>
           <TouchableOpacity
             style={styles.backButton}
-            onPress={() => router.back()}
+            onPress={() => router.push("/transfer")}
           >
             <AntDesign name="arrowleft" size={24} color="#000" />
           </TouchableOpacity>
@@ -285,6 +421,30 @@ const MultipleBankTransfer: React.FC = () => {
           </TouchableOpacity>
           <View className="mr-6" />
         </View>
+
+        {preFilledAccounts.length > 0 && (
+          <View
+            style={{
+              backgroundColor: "#F0F7FF",
+              padding: 12,
+              borderRadius: 8,
+              marginBottom: 16,
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <Text style={{ fontSize: 14, fontWeight: "600", color: "#0000ff" }}>
+              Account {currentAccountIndex + 1} of {preFilledAccounts.length}
+            </Text>
+            {currentAccountIndex < preFilledAccounts.length - 1 && (
+              <Text style={{ fontSize: 12, color: "#666" }}>
+                {preFilledAccounts.length - currentAccountIndex - 1} more to go
+              </Text>
+            )}
+          </View>
+        )}
+
         <KAScrollView>
           <Text style={styles.Subtitle}>Transaction Details</Text>
 
@@ -298,19 +458,40 @@ const MultipleBankTransfer: React.FC = () => {
               </Pressable>
             </View>
 
-            <TextInput
-              style={styles.input}
-              value={selectedBank.name || ""}
-              editable={false}
-            />
+            <View style={styles.tagInputContainer}>
+              <TextInput
+                style={styles.tagInput}
+                value={selectedBank?.name || ""}
+                editable={false}
+              />
+
+              <TouchableOpacity
+                onPress={() => {
+                  router.push({ pathname: "/AccountScannerScreen" });
+                }}
+              >
+                <MaterialIcons name="qr-code" size={23} color="#1400FB" />
+              </TouchableOpacity>
+            </View>
 
             <Text style={styles.label}>Account Number</Text>
-            <TextInput
-              style={styles.input}
-              value={accountNumber}
-              onChangeText={handleAccountNumberChange}
-              keyboardType="number-pad"
-            />
+
+            <View style={styles.tagInputContainer}>
+              <TextInput
+                style={styles.tagInput}
+                value={accountNumber}
+                onChangeText={handleAccountNumberChange}
+                keyboardType="number-pad"
+              />
+
+              <TouchableOpacity
+                onPress={() => {
+                  router.push({ pathname: "/AccountScannerScreen" });
+                }}
+              >
+                <MaterialIcons name="qr-code" size={23} color="#1400FB" />
+              </TouchableOpacity>
+            </View>
 
             <View style={{ display: "none" }}>
               <Text style={styles.label}>Account Name</Text>
@@ -355,7 +536,6 @@ const MultipleBankTransfer: React.FC = () => {
             />
           </View>
 
-          {/* Tab Switcher */}
           <View style={styles.recentContainer}>
             <View style={styles.recentHeader}>
               <View style={styles.recentTopbar}>
@@ -398,51 +578,26 @@ const MultipleBankTransfer: React.FC = () => {
             {selectedTab === "Recent" ? (
               <RecentTransfers onSelectBeneficiary={handleSelectBeneficiary} />
             ) : (
-              // Favorites Tab Content
-              <>
-                {/* <ScrollView showsVerticalScrollIndicator={false}>
-                  <View style={styles.users}>
-                    <Image
-                      source={require("../assets/banks/uba.png")}
-                      style={styles.user}
-                    />
-                    <View>
-                      <Text style={styles.name}>Jane Doe</Text>
-                      <Text style={styles.account}>123456789 UBA</Text>
-                    </View>
-                  </View>
-                  <View style={styles.users}>
-                    <Image
-                      source={require("../assets/banks/fcmb.png")}
-                      style={styles.user}
-                    />
-                    <View>
-                      <Text style={styles.name}>Michael Smith</Text>
-                      <Text style={styles.account}>987654321 FCMB</Text>
-                    </View>
-                  </View>
-                  <TouchableOpacity
-                    style={styles.viewMore}
-                    onPress={() => router.push("/Beneficiaries")}
-                  >
-                    <Text style={styles.viewMoreText}>View more</Text>
-                  </TouchableOpacity>
-                </ScrollView> */}
-                <Favorites
-                  onSelectBeneficiary={handleSelectFavorite}
-                  type="bank"
-                />
-              </>
+              <Favorites
+                onSelectBeneficiary={handleSelectFavorite}
+                type="bank"
+              />
             )}
           </View>
           <Button
-            text="Add"
+            text={
+              preFilledAccounts.length > 0 &&
+              currentAccountIndex < preFilledAccounts.length - 1
+                ? `Add & Next (${
+                    preFilledAccounts.length - currentAccountIndex - 1
+                  } remaining)`
+                : "Add"
+            }
             onPress={handleAdd}
             disabled={!recipientName || !selectedBank.code || !amount}
           />
         </KAScrollView>
 
-        {/* Payment Summary Bottom Sheet */}
         <BottomSheet
           isVisible={isPaymentSummaryVisible}
           onBackdropPress={() => setIsPaymentSummaryVisible(false)}
@@ -509,7 +664,6 @@ const MultipleBankTransfer: React.FC = () => {
           </View>
         </BottomSheet>
 
-        {/* Transaction PIN Bottom Sheet */}
         <BottomSheet
           isVisible={isTransactionPinVisible}
           onBackdropPress={() => setIsTransactionPinVisible(false)}
@@ -542,7 +696,7 @@ const MultipleBankTransfer: React.FC = () => {
                   value={digit}
                   onChangeText={(text) => handleOtpChange(text, index)}
                   onKeyPress={(e) => handleKeyPress(e, index)}
-                  autoFocus={index === 0} // Auto-focus the first input
+                  autoFocus={index === 0}
                 />
               ))}
             </View>
@@ -555,7 +709,6 @@ const MultipleBankTransfer: React.FC = () => {
           </View>
         </BottomSheet>
 
-        {/* Success Bottom Sheet */}
         <BottomSheet
           isVisible={isSuccessVisible}
           onBackdropPress={() => setIsSuccessVisible(false)}
@@ -983,6 +1136,21 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "500",
     marginTop: 2,
+  },
+  tagInputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 10,
+    marginBottom: 10,
+    paddingHorizontal: 15,
+  },
+  tagInput: {
+    flex: 1,
+    padding: 15,
+    fontSize: 16,
+    color: "#000",
   },
 });
 
