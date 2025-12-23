@@ -12,6 +12,8 @@ import {
   FlatList,
   useWindowDimensions,
   TextInput,
+  Platform,
+  KeyboardAvoidingView,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import {
@@ -619,59 +621,77 @@ const AccountScannerScreen = () => {
         visible={showBottomSheet}
         onRequestClose={() => setShowBottomSheet(false)}
       >
-        <View style={styles.bottomSheetOverlay}>
-          <View style={styles.bottomSheetContent}>
-            <View style={styles.bottomSheetHeader}>
-              <View>
-                <Text style={styles.bottomSheetTitle}>Select Accounts</Text>
-                <Text style={styles.bottomSheetSubtitle}>
-                  {selectedAccounts.length} of {scannedAccounts.length} selected
-                </Text>
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+        >
+          <View style={styles.bottomSheetOverlay}>
+            <View style={styles.bottomSheetContent}>
+              <View style={styles.bottomSheetHeader}>
+                <View>
+                  <Text style={styles.bottomSheetTitle}>Select Accounts</Text>
+                  <Text style={styles.bottomSheetSubtitle}>
+                    {selectedAccounts.length} of {scannedAccounts.length}{" "}
+                    selected
+                  </Text>
+                </View>
+                <TouchableOpacity
+                  onPress={() => setShowBottomSheet(false)}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                >
+                  <Ionicons
+                    name="close"
+                    size={28}
+                    color={COLORS.swiftPayBlue}
+                  />
+                </TouchableOpacity>
               </View>
-              <TouchableOpacity
-                onPress={() => setShowBottomSheet(false)}
-                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              >
-                <Ionicons name="close" size={28} color={COLORS.swiftPayBlue} />
-              </TouchableOpacity>
-            </View>
 
-            <FlatList
-              data={scannedAccounts}
-              renderItem={renderAccountItem}
-              keyExtractor={(item) => item.id}
-              scrollEnabled={true}
-              style={styles.accountsList}
-              contentContainerStyle={styles.accountsListContent}
-              showsVerticalScrollIndicator={false}
-            />
-
-            <View style={styles.bottomSheetActions}>
-              <TouchableOpacity
-                style={[styles.bottomSheetButton, styles.cancelButton]}
-                onPress={() => setShowBottomSheet(false)}
-                activeOpacity={0.7}
+              <ScrollView
+                style={{ flex: 1 }}
+                contentContainerStyle={{ paddingBottom: 20 }}
+                keyboardShouldPersistTaps="handled"
               >
-                <Text style={styles.cancelButtonText}>Cancel</Text>
-              </TouchableOpacity>
+                <FlatList
+                  data={scannedAccounts}
+                  renderItem={renderAccountItem}
+                  keyExtractor={(item) => item.id}
+                  scrollEnabled={true}
+                  style={styles.accountsList}
+                  contentContainerStyle={styles.accountsListContent}
+                  showsVerticalScrollIndicator={false}
+                  keyboardShouldPersistTaps="handled"
+                />
+              </ScrollView>
 
-              <TouchableOpacity
-                style={[
-                  styles.bottomSheetButton,
-                  styles.confirmButton,
-                  selectedAccounts.length === 0 && styles.confirmButtonDisabled,
-                ]}
-                onPress={handleConfirmSelection}
-                disabled={selectedAccounts.length === 0}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.confirmButtonText}>
-                  Proceed ({selectedAccounts.length})
-                </Text>
-              </TouchableOpacity>
+              <View style={styles.bottomSheetActions}>
+                <TouchableOpacity
+                  style={[styles.bottomSheetButton, styles.cancelButton]}
+                  onPress={() => setShowBottomSheet(false)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.cancelButtonText}>Cancel</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[
+                    styles.bottomSheetButton,
+                    styles.confirmButton,
+                    selectedAccounts.length === 0 &&
+                      styles.confirmButtonDisabled,
+                  ]}
+                  onPress={handleConfirmSelection}
+                  disabled={selectedAccounts.length === 0}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.confirmButtonText}>
+                    Proceed ({selectedAccounts.length})
+                  </Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
     </SafeAreaView>
   );
@@ -689,7 +709,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 16,
     borderBottomWidth: 1,
-    marginTop: 35,
+    marginTop: Platform.OS === "ios" ? 0 : 35,
     borderBottomColor: "#f0f0f0",
   },
   headerTitle: {
@@ -893,15 +913,15 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
-    maxHeight: "90%",
-    minHeight: "50%",
+    maxHeight: "100%",
+    minHeight: "60%",
   },
   bottomSheetHeader: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 20,
-    paddingVertical: 20,
+    paddingVertical: 10,
     borderBottomWidth: 1,
     borderBottomColor: "#f0f0f0",
   },

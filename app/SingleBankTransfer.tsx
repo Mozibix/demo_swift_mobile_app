@@ -466,6 +466,11 @@ const SingleBankTransfer: React.FC = () => {
 
           if (matchedBank) {
             setSelectedBank({ name: matchedBank.name, code: matchedBank.code });
+            setAccountNumber(account.accountNumber);
+            handleAccountNumberChange(account.accountNumber, {
+              name: matchedBank.name,
+              code: matchedBank.code,
+            });
             showLogs("Bank found and set", {
               name: matchedBank.name,
               code: matchedBank.code,
