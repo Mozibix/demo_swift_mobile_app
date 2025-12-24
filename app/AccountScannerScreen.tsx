@@ -394,14 +394,7 @@ const AccountScannerScreen = () => {
     try {
       const text = await processImageWithOCR(imageUri);
 
-      const alertJSON = JSON.stringify({ text });
-
-      alert(alertJSON);
-
       const accounts = parseAccountsFromText(text);
-
-      console.log({ text });
-      console.log({ accounts });
 
       if (accounts.length === 0) {
         Alert.alert(
