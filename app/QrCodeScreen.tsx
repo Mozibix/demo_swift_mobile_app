@@ -30,6 +30,7 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   Vibration,
   View,
 } from "react-native";
@@ -57,15 +58,11 @@ const QrCodeScreen = () => {
   const [scannedRemarks, setScannedRemarks] = useState<string | undefined>();
   const { user } = useAuth();
   const [qrValue, setQrValue] = useState(user?.username ?? "loading...");
-
+  const [showShareOptions, setShowShareOptions] = useState(false);
   const [scannedAmount, setScannedAmount] = useState<string | undefined>();
 
-  // Define proper type for ViewShot ref
-  interface ViewShotMethods {
-    capture(): Promise<string>;
-  }
-
   const viewShotRef = useRef<ViewShot>(null);
+  const shareQrCodeViewShotRef: any = useRef<ViewShot>(null);
 
   // Reset state when component comes into focus
   useFocusEffect(
@@ -295,6 +292,7 @@ const QrCodeScreen = () => {
   const handleShareQR = async () => {
     if (viewShotRef.current && viewShotRef.current.capture && userProfile) {
       try {
+        setShowShareOptions(false);
         const uri = await viewShotRef.current.capture();
 
         const shareOptions = {
@@ -403,6 +401,28 @@ const QrCodeScreen = () => {
     );
   }
 
+  const handleShareQRCodeOnly = async () => {
+    if (!shareQrCodeViewShotRef.current) return;
+
+    try {
+      const uri = await shareQrCodeViewShotRef.current.capture();
+
+      await Sharing.shareAsync(uri, {
+        dialogTitle: `${userProfile?.first_name}'s SwiftPay QR Code`,
+        UTI: "public.png",
+        mimeType: "image/png",
+      });
+    } catch (err) {
+      console.error("Error capturing or sharing:", err);
+      Toast.show({
+        type: "error",
+        position: "top",
+        text1: "Error",
+        text2: "Failed to share your QR code. Please try again.",
+        visibilityTime: 3000,
+      });
+    }
+  };
   // Get display name - use name if available, otherwise use first_name
   const displayName = userProfile?.name || userProfile?.first_name || "User";
 
@@ -459,25 +479,30 @@ const QrCodeScreen = () => {
                   <Text style={styles.userTag}>@{userProfile?.username}</Text>
                 </View>
 
-                <View style={styles.qrCodeContainer}>
-                  {userProfile ? (
-                    <View style={styles.qrWrapper}>
-                      <SvgQRCode
-                        value={qrValue}
-                        size={220}
-                        backgroundColor="white"
-                        color="#0033cc"
-                        logo={require("../assets/icons/icon.png")}
-                        logoSize={40}
-                        logoBackgroundColor="white"
-                        logoMargin={5}
-                        logoBorderRadius={10}
-                      />
-                    </View>
-                  ) : (
-                    <ActivityIndicator size="large" color="white" />
-                  )}
-                </View>
+                <ViewShot
+                  ref={shareQrCodeViewShotRef}
+                  options={{ format: "png", quality: 0.9 }}
+                >
+                  <View style={styles.qrCodeContainer}>
+                    {userProfile ? (
+                      <View style={styles.qrWrapper}>
+                        <SvgQRCode
+                          value={qrValue}
+                          size={220}
+                          backgroundColor="white"
+                          color="#0033cc"
+                          logo={require("../assets/icons/icon.png")}
+                          logoSize={40}
+                          logoBackgroundColor="white"
+                          logoMargin={5}
+                          logoBorderRadius={10}
+                        />
+                      </View>
+                    ) : (
+                      <ActivityIndicator size="large" color="white" />
+                    )}
+                  </View>
+                </ViewShot>
 
                 <Text style={styles.scanInstructions}>
                   Scan to send money instantly
@@ -499,7 +524,7 @@ const QrCodeScreen = () => {
             {userProfile && (
               <TouchableOpacity
                 style={styles.shareButton}
-                onPress={handleShareQR}
+                onPress={() => setShowShareOptions(true)}
               >
                 <FontAwesome name="share-alt" size={18} color="#fff" />
                 <Text style={styles.shareButtonText}>Share QR Code</Text>
@@ -699,6 +724,46 @@ const QrCodeScreen = () => {
           )}
         </View>
       </View>
+
+      <Modal
+        transparent
+        animationType="slide"
+        visible={showShareOptions}
+        onRequestClose={() => setShowShareOptions(false)}
+      >
+        <TouchableWithoutFeedback onPress={() => setShowShareOptions(false)}>
+          <View style={styles.sheetOverlay}>
+            <TouchableWithoutFeedback>
+              <View style={styles.sheetContainer}>
+                <View style={styles.sheetHandle} />
+
+                <Text style={styles.sheetTitle}>Share QR</Text>
+
+                <TouchableOpacity
+                  style={styles.sheetOption}
+                  onPress={() => {
+                    setShowShareOptions(false);
+                    handleShareQRCodeOnly();
+                  }}
+                >
+                  <Ionicons name="qr-code-outline" size={22} color="#000" />
+                  <Text style={styles.sheetOptionText}>Share QR Code Only</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.sheetOption}
+                  onPress={handleShareQR}
+                >
+                  <Ionicons name="image-outline" size={22} color="#000" />
+                  <Text style={styles.sheetOptionText}>
+                    Share QR with Background
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -1072,5 +1137,50 @@ const styles = StyleSheet.create({
     color: "white",
     fontWeight: "600",
     fontSize: 14,
+  },
+
+  sheetOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.4)",
+    justifyContent: "flex-end",
+  },
+
+  sheetContainer: {
+    backgroundColor: "#fff",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 30,
+  },
+
+  sheetHandle: {
+    width: 40,
+    height: 4,
+    backgroundColor: "#ccc",
+    borderRadius: 2,
+    alignSelf: "center",
+    marginBottom: 10,
+  },
+
+  sheetTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    textAlign: "center",
+    marginBottom: 20,
+  },
+
+  sheetOption: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#f0f0f0",
+  },
+
+  sheetOptionText: {
+    fontSize: 16,
+    fontWeight: "500",
   },
 });

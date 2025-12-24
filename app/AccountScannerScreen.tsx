@@ -45,7 +45,6 @@ const AccountScannerScreen = () => {
   const [editingAccountId, setEditingAccountId] = useState<string | null>(null);
   const [editedBankName, setEditedBankName] = useState<string>("");
   const [editedAccountNumber, setEditedAccountNumber] = useState<string>(""); //
-
   const parseAccountsFromText = (text: string): ScannedAccount[] => {
     const accounts: ScannedAccount[] = [];
 
@@ -171,11 +170,8 @@ const AccountScannerScreen = () => {
         name: "NEXIM Bank",
       },
       { regex: /trust bank|trust/gi, name: "Trust Bank" },
-
       { regex: /gtco|gtco plc/gi, name: "Guaranty Trust Holding Company" },
       { regex: /fbnquest|fbn quest/gi, name: "FBN Quest" },
-      { regex: /stanbic bank|stanbic/gi, name: "Stanbic Bank" },
-      { regex: /zenith bank plc/gi, name: "Zenith Bank" },
       { regex: /mastercard|mastercard international/gi, name: "Mastercard" },
       { regex: /visa|visa inc|visa international/gi, name: "Visa" },
       { regex: /stripe|stripe.com/gi, name: "Stripe" },
@@ -223,40 +219,57 @@ const AccountScannerScreen = () => {
     allMatches.forEach((match, index) => {
       const { accountNumber, position } = match;
 
-      const contextStart = Math.max(0, position - 800);
-      const contextEnd = Math.min(text.length, position + 800);
-      const context = text.substring(contextStart, contextEnd);
+      // Get the previous account position (or start if first)
+      const previousAccountPosition =
+        index > 0 ? allMatches[index - 1].position : 0;
 
-      const beforeText = text.substring(Math.max(0, position - 200), position);
+      // Get the next account position (or end of text if last)
+      const nextAccountPosition =
+        index + 1 < allMatches.length
+          ? allMatches[index + 1].position
+          : text.length;
+
+      // Search in the zone AFTER previous account and BEFORE next account
+      // This isolates each account's section
+      const searchStart = Math.max(previousAccountPosition, position - 200);
+      const searchEnd = Math.min(text.length, nextAccountPosition);
+
+      const searchContext = text.substring(searchStart, searchEnd);
+
+      // Priority zones
+      const beforeText = text.substring(Math.max(0, position - 100), position); // 100 chars before
       const afterText = text.substring(
         position,
-        Math.min(text.length, position + 200)
-      );
+        Math.min(text.length, position + 150)
+      ); // 150 chars after
 
       let foundBank = "Unknown Bank";
       let bestMatch = { bank: "Unknown Bank", score: 0 };
 
+      // PRIORITY 1: Check text immediately BEFORE account number (closest)
       for (const pattern of bankPatterns) {
         if (pattern.regex.test(beforeText)) {
-          if (beforeText.length < 200) {
-            bestMatch = { bank: pattern.name, score: 3 };
+          bestMatch = { bank: pattern.name, score: 3 };
+          break;
+        }
+      }
+
+      // PRIORITY 2: Check text immediately AFTER account number
+      if (bestMatch.score === 0) {
+        for (const pattern of bankPatterns) {
+          if (pattern.regex.test(afterText)) {
+            bestMatch = { bank: pattern.name, score: 2 };
             break;
-          } else {
-            if (bestMatch.score < 2) {
-              bestMatch = { bank: pattern.name, score: 2 };
-            }
           }
         }
+      }
 
-        if (pattern.regex.test(context)) {
-          if (bestMatch.score < 1) {
+      // PRIORITY 3: Check full search context
+      if (bestMatch.score === 0) {
+        for (const pattern of bankPatterns) {
+          if (pattern.regex.test(searchContext)) {
             bestMatch = { bank: pattern.name, score: 1 };
-          }
-        }
-
-        if (pattern.regex.test(afterText)) {
-          if (bestMatch.score < 0.5) {
-            bestMatch = { bank: pattern.name, score: 0.5 };
+            break;
           }
         }
       }

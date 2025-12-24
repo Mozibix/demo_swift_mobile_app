@@ -42,6 +42,7 @@ const QrCodeMain = () => {
   const [showAmountModal, setShowAmountModal] = useState(false);
   const [showSharePreview, setShowSharePreview] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [showShareOptions, setShowShareOptions] = useState(false);
 
   const { user } = useAuth();
 
@@ -53,7 +54,7 @@ const QrCodeMain = () => {
     : "";
   const swiftPayTag = userProfile?.username ? `@${userProfile.username}` : "";
 
-  const viewShotRef = useRef<ViewShot>(null);
+  const viewShotRef: any = useRef<ViewShot>(null);
   const shareViewShotRef: any = useRef<ViewShot>(null);
 
   const fetchUserProfile = async () => {
@@ -138,6 +139,29 @@ const QrCodeMain = () => {
       //   text2: "QR code shared successfully!",
       //   visibilityTime: 3000,
       // });
+    } catch (err) {
+      console.error("Error capturing or sharing:", err);
+      Toast.show({
+        type: "error",
+        position: "top",
+        text1: "Error",
+        text2: "Failed to share your QR code. Please try again.",
+        visibilityTime: 3000,
+      });
+    }
+  };
+
+  const handleShareQRCodeOnly = async () => {
+    if (!viewShotRef.current) return;
+
+    try {
+      const uri = await viewShotRef.current.capture();
+
+      await Sharing.shareAsync(uri, {
+        dialogTitle: `${userProfile?.first_name}'s SwiftPay QR Code`,
+        UTI: "public.png",
+        mimeType: "image/png",
+      });
     } catch (err) {
       console.error("Error capturing or sharing:", err);
       Toast.show({
@@ -441,7 +465,7 @@ const QrCodeMain = () => {
             <View style={styles.actionsContainer}>
               <TouchableOpacity
                 style={styles.actionButton}
-                onPress={() => setShowSharePreview(true)}
+                onPress={() => setShowShareOptions(true)}
               >
                 <View style={styles.actionIconContainer}>
                   <Ionicons
@@ -450,8 +474,9 @@ const QrCodeMain = () => {
                     color={COLORS.swiftPayBlue}
                   />
                 </View>
-                <Text style={styles.actionText}>Share QR</Text>
+                <Text style={styles.actionText}>Share</Text>
               </TouchableOpacity>
+
               <TouchableOpacity
                 style={styles.actionButton}
                 onPress={goToScanQR}
@@ -473,6 +498,53 @@ const QrCodeMain = () => {
               classNames="w-full"
             />
           </View>
+
+          <Modal
+            transparent
+            animationType="slide"
+            visible={showShareOptions}
+            onRequestClose={() => setShowShareOptions(false)}
+          >
+            <TouchableWithoutFeedback
+              onPress={() => setShowShareOptions(false)}
+            >
+              <View style={styles.sheetOverlay}>
+                <TouchableWithoutFeedback>
+                  <View style={styles.sheetContainer}>
+                    <View style={styles.sheetHandle} />
+
+                    <Text style={styles.sheetTitle}>Share QR</Text>
+
+                    <TouchableOpacity
+                      style={styles.sheetOption}
+                      onPress={() => {
+                        setShowShareOptions(false);
+                        handleShareQRCodeOnly();
+                      }}
+                    >
+                      <Ionicons name="qr-code-outline" size={22} color="#000" />
+                      <Text style={styles.sheetOptionText}>
+                        Share QR Code Only
+                      </Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={styles.sheetOption}
+                      onPress={() => {
+                        setShowShareOptions(false);
+                        setShowSharePreview(true);
+                      }}
+                    >
+                      <Ionicons name="image-outline" size={22} color="#000" />
+                      <Text style={styles.sheetOptionText}>
+                        Share QR with Background
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </TouchableWithoutFeedback>
+              </View>
+            </TouchableWithoutFeedback>
+          </Modal>
         </ScrollView>
       </>
     </SafeAreaView>
@@ -880,6 +952,51 @@ const styles = StyleSheet.create({
   cardFooterText: {
     fontSize: 14,
     color: "rgba(255, 255, 255, 0.9)",
+    fontWeight: "500",
+  },
+
+  sheetOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.4)",
+    justifyContent: "flex-end",
+  },
+
+  sheetContainer: {
+    backgroundColor: "#fff",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 30,
+  },
+
+  sheetHandle: {
+    width: 40,
+    height: 4,
+    backgroundColor: "#ccc",
+    borderRadius: 2,
+    alignSelf: "center",
+    marginBottom: 10,
+  },
+
+  sheetTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    textAlign: "center",
+    marginBottom: 20,
+  },
+
+  sheetOption: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#f0f0f0",
+  },
+
+  sheetOptionText: {
+    fontSize: 16,
     fontWeight: "500",
   },
 });
