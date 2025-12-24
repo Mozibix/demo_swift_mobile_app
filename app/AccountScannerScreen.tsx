@@ -59,7 +59,8 @@ const AccountScannerScreen = () => {
         name: "Access Bank",
       },
       {
-        regex: /first bank|first city monument bank|fcmb|first city bank/gi,
+        regex:
+          /first bank|first city monument bank|fcmb|first city bank|fcmb bank/gi,
         name: "First Bank / FCMB",
       },
       { regex: /zenith|zenith bank|zenithbank/gi, name: "Zenith Bank" },
@@ -68,124 +69,213 @@ const AccountScannerScreen = () => {
         name: "Stanbic IBTC",
       },
       {
-        regex: /uba|united bank|united bank for africa|uba bank/gi,
+        regex: /uba|united bank|united bank for africa|uba bank|uba plc/gi,
         name: "UBA",
       },
-      { regex: /wema bank/gi, name: "Wema Bank" },
-      { regex: /sterling bank/gi, name: "Sterling Bank" },
-      { regex: /fidelity bank/gi, name: "Fidelity Bank" },
+      { regex: /wema bank|wema|wemabk/gi, name: "Wema Bank" },
+      { regex: /sterling bank|sterling|sterlingbk/gi, name: "Sterling Bank" },
+      { regex: /fidelity bank|fidelity|fidelitybk/gi, name: "Fidelity Bank" },
       {
-        regex: /diamond bank|access diamond bank|diamondbank/gi,
-        name: "Diamond Bank (Now Access Bank)",
+        regex: /diamond bank|access diamond bank|diamondbank|diamond/gi,
+        name: "Diamond Bank",
       },
       {
-        regex: /moniepoint|monie point|monie-point|moncepoint/gi,
+        regex:
+          /moniepoint|monie point|monie-point|moncepoint|monie|moniepoint bank/gi,
         name: "Moniepoint",
       },
-      { regex: /opay|o-pay|opay nigeria/gi, name: "OPay" },
-      { regex: /paga|paga app|paga nigeria/gi, name: "Paga" },
-      { regex: /flutterwave|flutterwave.com/gi, name: "Flutterwave" },
-      { regex: /paystack|paystack.com/gi, name: "Paystack" },
-      { regex: /interswitch|interswitch nigeria/gi, name: "Interswitch" },
-      { regex: /kuda|kuda bank/gi, name: "Kuda Bank" },
+      { regex: /opay|o-pay|opay nigeria|opay bank|o pay/gi, name: "OPay" },
+      { regex: /paga|paga app|paga nigeria|paga money/gi, name: "Paga" },
       {
-        regex: /carbon|paylater|carbon app/gi,
-        name: "Carbon (formerly Paylater)",
+        regex: /flutterwave|flutterwave.com|flutter/gi,
+        name: "Flutterwave",
       },
-      { regex: /eco bank|ecobank/gi, name: "EcoBank" },
-      { regex: /jaiz bank|jaizbank/gi, name: "Jaiz Bank" },
-      { regex: /polaris bank|polarisbank/gi, name: "Polaris Bank" },
+      { regex: /paystack|paystack.com|paystack bank/gi, name: "Paystack" },
       {
-        regex: /union bank|union bank of nigeria/gi,
-        name: "Union Bank of Nigeria",
+        regex: /interswitch|interswitch nigeria|interswitch limited/gi,
+        name: "Interswitch",
       },
-      { regex: /skye bank|skyebank/gi, name: "Skye Bank (Now Polaris)" },
-      { regex: /globus bank/gi, name: "Globus Bank" },
+      { regex: /kuda|kuda bank|kudabank/gi, name: "Kuda Bank" },
       {
-        regex: /first national bank|fnb|first national bank nigeria/gi,
-        name: "First National Bank (FNB)",
+        regex: /carbon|paylater|carbon app|carbon credit/gi,
+        name: "Carbon",
+      },
+      { regex: /eco bank|ecobank|ecobank nigeria/gi, name: "EcoBank" },
+      { regex: /jaiz bank|jaizbank|jaiz/gi, name: "Jaiz Bank" },
+      { regex: /polaris bank|polarisbank|polaris/gi, name: "Polaris Bank" },
+      {
+        regex: /union bank|union bank of nigeria|unionbank/gi,
+        name: "Union Bank",
+      },
+      { regex: /skye bank|skyebank|skye/gi, name: "Skye Bank" },
+      { regex: /globus bank|globus|globusbank/gi, name: "Globus Bank" },
+      {
+        regex: /first national bank|fnb|first national bank nigeria|fnb bank/gi,
+        name: "First National Bank",
       },
       {
         regex: /new development bank|brics bank/gi,
-        name: "New Development Bank (BRICS)",
+        name: "New Development Bank",
       },
-      { regex: /bank of africa|bankofafrica/gi, name: "Bank of Africa" },
-      { regex: /momo|momo money|momo by mtn/gi, name: "Momo (by MTN)" },
-      { regex: /xpress money/gi, name: "Xpress Money" },
-      { regex: /remita/gi, name: "Remita" },
-      { regex: /finca microfinance/gi, name: "FINCA Microfinance" },
-      { regex: /small world/gi, name: "Small World Financial Services" },
-      { regex: /payoneer/gi, name: "Payoneer" },
-      { regex: /worldpay/gi, name: "Worldpay" },
-      { regex: /lendingtree/gi, name: "LendingTree" },
       {
-        regex: /commercial bank of africa|cba/gi,
-        name: "Commercial Bank of Africa (CBA)",
+        regex: /bank of africa|bankofafrica|boa bank/gi,
+        name: "Bank of Africa",
       },
-      { regex: /absa group|absa bank/gi, name: "Absa Group" },
-      { regex: /bank of china/gi, name: "Bank of China" },
-      { regex: /bank of america/gi, name: "Bank of America" },
-      { regex: /hsbc/gi, name: "HSBC" },
+      { regex: /momo|momo money|momo by mtn|mtn momo/gi, name: "Momo" },
+      { regex: /xpress money|xpress/gi, name: "Xpress Money" },
+      { regex: /remita|remita.net/gi, name: "Remita" },
+      { regex: /finca microfinance|finca/gi, name: "FINCA Microfinance" },
+      { regex: /small world|smallworld/gi, name: "Small World" },
+      { regex: /payoneer|payoneer.com/gi, name: "Payoneer" },
+      { regex: /worldpay|worldpay.com/gi, name: "Worldpay" },
+      { regex: /lendingtree|lending tree/gi, name: "LendingTree" },
       {
-        regex: /standard chartered|standard chartered bank/gi,
+        regex: /commercial bank of africa|cba|cba bank/gi,
+        name: "CBA",
+      },
+      { regex: /absa group|absa bank|absa/gi, name: "Absa Bank" },
+      {
+        regex: /bank of china|boc|bank of china limited/gi,
+        name: "Bank of China",
+      },
+      {
+        regex: /bank of america|bofa|bank of america|boa/gi,
+        name: "Bank of America",
+      },
+      { regex: /hsbc|hsbc bank/gi, name: "HSBC" },
+      {
+        regex: /standard chartered|standard chartered bank|sc bank/gi,
         name: "Standard Chartered",
       },
-      { regex: /barclays/gi, name: "Barclays Bank" },
-      { regex: /wells fargo/gi, name: "Wells Fargo" },
+      { regex: /barclays|barclays bank|barclays plc/gi, name: "Barclays Bank" },
+      { regex: /wells fargo|wells fargo bank/gi, name: "Wells Fargo" },
       {
-        regex: /commercial bank of nigeria|cbn/gi,
+        regex: /commercial bank of nigeria|cbn bank/gi,
         name: "Commercial Bank of Nigeria",
       },
-      { regex: /china construction bank/gi, name: "China Construction Bank" },
+      {
+        regex: /china construction bank|ccb/gi,
+        name: "China Construction Bank",
+      },
       {
         regex: /nnpc|nigerian national petroleum corporation/gi,
-        name: "NNPC - Nigerian National Petroleum Corporation",
+        name: "NNPC",
       },
       { regex: /state bank of india|sbi/gi, name: "State Bank of India" },
       {
-        regex: /central bank of nigeria|cbn/gi,
-        name: "Central Bank of Nigeria (CBN)",
+        regex: /central bank of nigeria|cbn|central bank/gi,
+        name: "Central Bank of Nigeria",
       },
       {
-        regex: /nigerian export-import bank|nexim bank/gi,
-        name: "Nigerian Export-Import Bank (NEXIM)",
+        regex: /nigerian export-import bank|nexim bank|nexim/gi,
+        name: "NEXIM Bank",
       },
-      { regex: /trust bank/gi, name: "Trust Bank" },
+      { regex: /trust bank|trust/gi, name: "Trust Bank" },
+
+      { regex: /gtco|gtco plc/gi, name: "Guaranty Trust Holding Company" },
+      { regex: /fbnquest|fbn quest/gi, name: "FBN Quest" },
+      { regex: /stanbic bank|stanbic/gi, name: "Stanbic Bank" },
+      { regex: /zenith bank plc/gi, name: "Zenith Bank" },
+      { regex: /mastercard|mastercard international/gi, name: "Mastercard" },
+      { regex: /visa|visa inc|visa international/gi, name: "Visa" },
+      { regex: /stripe|stripe.com/gi, name: "Stripe" },
+      { regex: /razorpay|razorpay.com/gi, name: "Razorpay" },
+      { regex: /square|square inc/gi, name: "Square" },
+      { regex: /2checkout|2co/gi, name: "2Checkout" },
+      { regex: /alipay|alipay.com/gi, name: "Alipay" },
+      { regex: /wechat|wechat pay/gi, name: "WeChat Pay" },
     ];
 
-    const accountRegex = /\b\d{10}\b/g;
-    const lines = text
-      .split(/\n+/)
-      .map((l) => l.trim())
-      .filter(Boolean);
+    const accountRegexPatterns = [
+      /\b\d{10}\b/g,
+      /\b\d{9}\b/g,
+      /\b\d{11}\b/g,
+      /\b\d{12}\b/g,
+    ];
 
-    const accountMatches = text.match(accountRegex) || [];
-    if (accountMatches.length === 0) {
+    const allMatches: Array<{
+      accountNumber: string;
+      position: number;
+      length: number;
+    }> = [];
+
+    accountRegexPatterns.forEach((regex) => {
+      const matches = Array.from(text.matchAll(regex));
+      matches.forEach((match) => {
+        const accountNumber = match[0];
+
+        if (!allMatches.some((m) => m.accountNumber === accountNumber)) {
+          allMatches.push({
+            accountNumber,
+            position: match.index || 0,
+            length: accountNumber.length,
+          });
+        }
+      });
+    });
+
+    allMatches.sort((a, b) => a.position - b.position);
+
+    if (allMatches.length === 0) {
       return [];
     }
 
-    let currentBank = "Unknown Bank";
+    allMatches.forEach((match, index) => {
+      const { accountNumber, position } = match;
 
-    lines.forEach((line, index) => {
+      const contextStart = Math.max(0, position - 800);
+      const contextEnd = Math.min(text.length, position + 800);
+      const context = text.substring(contextStart, contextEnd);
+
+      const beforeText = text.substring(Math.max(0, position - 200), position);
+      const afterText = text.substring(
+        position,
+        Math.min(text.length, position + 200)
+      );
+
+      let foundBank = "Unknown Bank";
+      let bestMatch = { bank: "Unknown Bank", score: 0 };
+
       for (const pattern of bankPatterns) {
-        if (pattern.regex.test(line)) {
-          currentBank = pattern.name;
-          break;
+        if (pattern.regex.test(beforeText)) {
+          if (beforeText.length < 200) {
+            bestMatch = { bank: pattern.name, score: 3 };
+            break;
+          } else {
+            if (bestMatch.score < 2) {
+              bestMatch = { bank: pattern.name, score: 2 };
+            }
+          }
+        }
+
+        if (pattern.regex.test(context)) {
+          if (bestMatch.score < 1) {
+            bestMatch = { bank: pattern.name, score: 1 };
+          }
+        }
+
+        if (pattern.regex.test(afterText)) {
+          if (bestMatch.score < 0.5) {
+            bestMatch = { bank: pattern.name, score: 0.5 };
+          }
         }
       }
 
-      const match = line.match(accountRegex);
-      if (match) {
-        accounts.push({
-          id: `${Date.now()}-${index}`,
-          bankName: currentBank,
-          accountNumber: match[0],
-          selected: false,
-        });
-      }
+      foundBank = bestMatch.bank;
+
+      accounts.push({
+        id: `${Date.now()}-${index}`,
+        bankName: foundBank,
+        accountNumber: accountNumber,
+        selected: false,
+      });
     });
 
-    return accounts;
+    const uniqueAccounts = Array.from(
+      new Map(accounts.map((acc) => [acc.accountNumber, acc])).values()
+    );
+
+    return uniqueAccounts;
   };
 
   const processImageWithOCR = async (imageUri: string) => {
@@ -304,7 +394,14 @@ const AccountScannerScreen = () => {
     try {
       const text = await processImageWithOCR(imageUri);
 
+      const alertJSON = JSON.stringify({ text });
+
+      alert(alertJSON);
+
       const accounts = parseAccountsFromText(text);
+
+      console.log({ text });
+      console.log({ accounts });
 
       if (accounts.length === 0) {
         Alert.alert(
