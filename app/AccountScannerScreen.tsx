@@ -21,10 +21,12 @@ import {
   MaterialCommunityIcons,
   MaterialIcons,
 } from "@expo/vector-icons";
+import * as SecureStore from "expo-secure-store";
 import { Image } from "expo-image";
 import { router } from "expo-router";
 import { COLORS } from "@/constants/Colors";
 import { GOOGLE_VISION_API_KEY } from "@/utils";
+import Toast from "react-native-toast-message";
 
 interface BankAccount {
   bankName: string;
@@ -404,22 +406,61 @@ const AccountScannerScreen = () => {
 
   const extractText = async (imageUri: string) => {
     setLoading(true);
+
     try {
+      const token = await SecureStore.getItemAsync("userToken");
+
+      if (!token) {
+        Toast.show({
+          type: "error",
+          text1: "Authentication Error",
+          text2: "Please login again",
+          position: "top",
+        });
+        return;
+      }
+
       const text = await processImageWithOCR(imageUri);
 
-      const accounts = parseAccountsFromText(text);
+      const response = await fetch(
+        "https://staging.swiftpaymfb.com/api/ocr/extract-accounts",
+        {
+          method: "POST",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ ocr_text: text }),
+        }
+      );
 
-      if (accounts.length === 0) {
+      const result = await response.json();
+
+      if (!response.ok || result.status !== "success") {
+        throw new Error(result.message || "Failed to extract accounts");
+      }
+
+      const accounts = Array.isArray(result.data) ? result.data : [];
+
+      const mappedAccounts: ScannedAccount[] = accounts.map(
+        (item: any, index: number) => ({
+          id: `${Date.now()}-${index}`,
+          bankName: item.bankName || "Unknown Bank",
+          accountNumber: item.accountNumber,
+          selected: false,
+        })
+      );
+
+      if (mappedAccounts.length === 0) {
         Alert.alert(
           "No Accounts Found",
           "Could not detect any account numbers in the image."
         );
         setSelectedImage(null);
-        setLoading(false);
         return;
       }
 
-      setScannedAccounts(accounts);
+      setScannedAccounts(mappedAccounts);
       setShowBottomSheet(true);
     } catch (error: any) {
       Alert.alert(
@@ -1160,3 +1201,48 @@ const styles = StyleSheet.create({
 });
 
 export default AccountScannerScreen;
+
+/* 
+import { GoogleGenerativeAI } from "@google/generative-ai";
+
+const genAI = new GoogleGenerativeAI(process.env.EXPO_PUBLIC_GEMINI_API_KEY);
+
+export async function extractAccountsWithGemini(ocrText: string) {
+  const model = genAI.getGenerativeModel({
+    model: "gemini-1.5-flash",
+    systemInstruction: `
+You are a financial document parser.
+
+Rules:
+- Extract ONLY valid bank account numbers (9–12 digits)
+- Match each account number with the correct bank
+- Use proximity to pair banks with account numbers
+- Correct obvious OCR spelling mistakes
+- Remove duplicates
+- Do NOT invent data
+- Return ONLY valid JSON
+`
+  });
+
+  const prompt = `
+Extract all bank accounts from the OCR text below.
+
+Return strictly JSON in this format:
+[
+  { "bankName": "string", "accountNumber": "string" }
+]
+
+OCR TEXT:
+"""
+${ocrText}
+"""
+`;
+
+  const result = await model.generateContent(prompt);
+  const text = result.response.text();
+
+  return JSON.parse(text);
+}
+
+
+*/
